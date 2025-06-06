@@ -1146,43 +1146,46 @@ for i = 0 to n-1:
                 gridView.children[gridSize * gridSize - 1].classList.add('end');
             }
 
-            generateTree() {
-                const treeView = document.getElementById('treeView');
-                treeView.innerHTML = '';
-                
-                const size = parseInt(document.getElementById('size').value);
-                const levels = Math.min(4, Math.max(1, Math.floor(Math.log2(size))));
-                
-                // Generate tree nodes with proper parent-child relationships
-                const nodes = [];
-                let nodeCount = 0;
-                
-                for (let level = 0; level < levels; level++) {
-                    const levelDiv = document.createElement('div');
-                    levelDiv.className = 'tree-level';
-                    
-                    const nodesInLevel = Math.pow(2, level);
-                    for (let i = 0; i < nodesInLevel && nodeCount < size; i++) {
-                        const node = document.createElement('div');
-                        node.className = 'tree-node';
-                        const value = Math.floor(Math.random() * 100) + 1;
-                        node.textContent = value;
-                        node.dataset.value = value;
-                        node.dataset.index = nodeCount++;
-                        
-                        // Store parent-child relationship
-                        if (level > 0) {
-                            const parentIndex = Math.floor((i)/2);
-                            node.dataset.parent = nodes[level-1][parentIndex].dataset.index;
-                        }
-                        
-                        levelDiv.appendChild(node);
-                    }
-                    
-                    treeView.appendChild(levelDiv);
-                    nodes.push(Array.from(levelDiv.children));
-                }
-            }
+			generateTree() {
+				const treeView = document.getElementById('treeView');
+				treeView.innerHTML = '';
+				
+				const size = Math.min(15, parseInt(document.getElementById('size').value));
+				const levels = Math.min(4, Math.max(1, Math.floor(Math.log2(size)) + 1));
+				
+				// Generate tree nodes with proper structure
+				let nodes = [];
+				let nodeCount = 0;
+				
+				for (let level = 0; level < levels; level++) {
+					const levelDiv = document.createElement('div');
+					levelDiv.className = 'tree-level';
+					
+					const nodesInLevel = Math.pow(2, level);
+					for (let i = 0; i < nodesInLevel && nodeCount < size; i++) {
+						const node = document.createElement('div');
+						node.className = 'tree-node';
+						const value = Math.floor(Math.random() * 100) + 1;
+						node.textContent = value;
+						node.dataset.value = value;
+						node.dataset.index = nodeCount;
+						node.dataset.level = level;
+						node.dataset.position = i;
+						
+						// Set parent index if not root
+						if (level > 0) {
+							const parentIndex = Math.floor(i / 2);
+							node.dataset.parent = nodes[level-1][parentIndex].dataset.index;
+						}
+						
+						levelDiv.appendChild(node);
+						nodeCount++;
+					}
+					
+					treeView.appendChild(levelDiv);
+					nodes.push(Array.from(levelDiv.children));
+				}
+			}
 
             // Helper method to generate a random binary tree
             generateRandomBinaryTree(levels) {
@@ -1281,21 +1284,23 @@ for i = 0 to n-1:
                 document.getElementById('swaps').textContent = this.arrayAccess;
             }
 
-            startVisualization() {
-                if (this.isPaused) {
-                    this.isPaused = false;
-                    this.continueAnimation();
-                    return;
-                }
+				startVisualization() {
+					if (this.isPaused) {
+						this.isPaused = false;
+						this.continueAnimation();
+						return;
+					}
 
-                this.isPlaying = true;
-                this.currentStep = 0;
-                this.comparisons = 0;
-                this.arrayAccess = 0;
-                
-                document.getElementById('startBtn').disabled = true;
-                document.getElementById('pauseBtn').disabled = false;
-                document.getElementById('generateBtn').disabled = true;
+					this.isPlaying = true;
+					this.currentStep = 0;
+					this.comparisons = 0;
+					this.arrayAccess = 0;
+					
+					// Disable appropriate buttons
+					document.getElementById('startBtn').disabled = true;
+					document.getElementById('pauseBtn').disabled = false;
+					document.getElementById('generateBtn').disabled = true;
+					document.getElementById('stepBtn').disabled = true;
                 
                 switch(this.currentCategory) {
                     case 'sorting':
@@ -1320,33 +1325,36 @@ for i = 0 to n-1:
                 document.getElementById('pauseBtn').disabled = true;
             }
 
-            reset() {
-                this.isPlaying = false;
-                this.isPaused = false;
-                this.currentStep = 0;
-                this.animationSteps = [];
-                
-                document.getElementById('startBtn').disabled = false;
-                document.getElementById('pauseBtn').disabled = true;
-                
-                // Don't generate new data, just reset the current visualization
-                switch(this.currentCategory) {
-                    case 'sorting':
-                        this.renderBars();
-                        break;
-                    case 'pathfinding':
-                        this.generateGrid();
-                        break;
-                    case 'tree':
-                        this.generateTree();
-                        break;
-                    case 'dp':
-                        this.generateDPVisualization();
-                        break;
-                }
-                
-                document.getElementById('description').textContent = 'Select an algorithm and click "Start Visualization" to begin';
-            }
+			reset() {
+				this.isPlaying = false;
+				this.isPaused = false;
+				this.currentStep = 0;
+				this.animationSteps = [];
+				
+				// Re-enable all buttons
+				document.getElementById('startBtn').disabled = false;
+				document.getElementById('pauseBtn').disabled = true;
+				document.getElementById('generateBtn').disabled = false;
+				document.getElementById('stepBtn').disabled = false;
+				
+				// Reset the visualization
+				switch(this.currentCategory) {
+					case 'sorting':
+						this.renderBars(); // Just re-render the existing data
+						break;
+					case 'pathfinding':
+						this.generateGrid();
+						break;
+					case 'tree':
+						this.generateTree();
+						break;
+					case 'dp':
+						this.generateDPVisualization();
+						break;
+				}
+				
+				document.getElementById('description').textContent = 'Select an algorithm and click "Start Visualization" to begin';
+			}
 
             stepThrough() {
                 if (this.animationSteps.length === 0) {
@@ -1837,73 +1845,84 @@ for i = 0 to n-1:
                 this.createConfetti();
             }
 
-            async visualizeBFS(nodes) {
-                const queue = [nodes[0][0]]; // Start with root node
-                const visited = new Set();
-                
-                document.getElementById('description').textContent = 'Starting Breadth-First Search...';
-                
-                while (queue.length > 0 && this.isPlaying) {
-                    const current = queue.shift();
-                    if (visited.has(current)) continue;
-                    
-                    visited.add(current);
-                    current.classList.add('visiting');
-                    
-                    document.getElementById('description').textContent = `Visiting node ${current.textContent}`;
-                    await this.sleep(150 - parseInt(document.getElementById('speed').value));
-                    
-                    current.classList.remove('visiting');
-                    current.classList.add('visited');
-                    
-                    // Find children in the next level
-                    const currentLevel = parseInt(current.parentElement.parentElement.dataset.level || 0);
-                    const nextLevel = currentLevel + 1;
-                    const nextLevelNodes = document.querySelectorAll(`.tree-level:nth-child(${nextLevel + 1}) .tree-node`);
-                    
-                    nextLevelNodes.forEach(node => {
-                        if (node.dataset.parent === current.dataset.index && !visited.has(node)) {
-                            queue.push(node);
-                        }
-                    });
-                    
-                    await this.sleep(100);
-                }
-                
-                document.getElementById('description').textContent = 'BFS traversal complete!';
-            }
+			async visualizeBFS(nodes) {
+				const allNodes = document.querySelectorAll('.tree-node');
+				if (allNodes.length === 0) return;
+				
+				// Reset all nodes first
+				allNodes.forEach(node => {
+					node.classList.remove('visiting', 'visited');
+				});
+				
+				const queue = [allNodes[0]]; // Start with root node
+				const visited = new Set();
+				
+				document.getElementById('description').textContent = 'Starting Breadth-First Search...';
+				
+				while (queue.length > 0 && this.isPlaying) {
+					const current = queue.shift();
+					if (visited.has(current)) continue;
+					
+					visited.add(current);
+					current.classList.add('visiting');
+					
+					document.getElementById('description').textContent = `Visiting node ${current.textContent}`;
+					await this.sleep(200 - parseInt(document.getElementById('speed').value));
+					
+					current.classList.remove('visiting');
+					current.classList.add('visited');
+					
+					// Find children
+					const currentIndex = current.dataset.index;
+					const children = Array.from(allNodes).filter(node => 
+						node.dataset.parent === currentIndex && !visited.has(node)
+					);
+					
+					children.forEach(child => queue.push(child));
+					
+					await this.sleep(100);
+				}
+				
+				document.getElementById('description').textContent = 'BFS traversal complete!';
+			}
 
-            async visualizeDFS(nodes) {
-                const visited = new Set();
-                
-                document.getElementById('description').textContent = 'Starting Depth-First Search...';
-                await this.dfsRecursive(nodes[0], nodes, visited);
-                document.getElementById('description').textContent = 'DFS traversal complete!';
-            }
+			async visualizeDFS(nodes) {
+				const allNodes = document.querySelectorAll('.tree-node');
+				if (allNodes.length === 0) return;
+				
+				// Reset all nodes first
+				allNodes.forEach(node => {
+					node.classList.remove('visiting', 'visited');
+				});
+				
+				document.getElementById('description').textContent = 'Starting Depth-First Search...';
+				await this.dfsRecursive(allNodes[0], allNodes);
+				document.getElementById('description').textContent = 'DFS traversal complete!';
+			}
 
-            async dfsRecursive(node, allNodes, visited) {
-                if (!this.isPlaying || visited.has(node)) return;
-                
-                visited.add(node);
-                node.classList.add('visiting');
-                
-                document.getElementById('description').textContent = `Visiting node ${node.textContent}`;
-                await this.sleep(150 - parseInt(document.getElementById('speed').value));
-                
-                node.classList.remove('visiting');
-                node.classList.add('visited');
-                
-                // Visit children (simulated tree structure)
-                const value = parseInt(node.textContent);
-                for (let otherNode of allNodes) {
-                    const otherValue = parseInt(otherNode.textContent);
-                    if (!visited.has(otherNode) && this.isChild(value, otherValue)) {
-                        await this.dfsRecursive(otherNode, allNodes, visited);
-                    }
-                }
-                
-                await this.sleep(100);
-            }
+			async dfsRecursive(node, allNodes, visited = new Set()) {
+				if (!this.isPlaying || visited.has(node)) return;
+				
+				visited.add(node);
+				node.classList.add('visiting');
+				
+				document.getElementById('description').textContent = `Visiting node ${node.textContent}`;
+				await this.sleep(200 - parseInt(document.getElementById('speed').value));
+				
+				node.classList.remove('visiting');
+				node.classList.add('visited');
+				
+				// Find children
+				const children = Array.from(allNodes).filter(n => 
+					n.dataset.parent === node.dataset.index && !visited.has(n)
+				);
+				
+				for (const child of children) {
+					await this.dfsRecursive(child, allNodes, visited);
+				}
+				
+				await this.sleep(100);
+			}
 
             isChild(parent, child) {
                 // Simple rule for binary tree structure
