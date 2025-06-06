@@ -1,5 +1,7 @@
 # 🧠 Modern Algorithm Visualizer
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/5acd4752-b6e1-4668-9e97-b9633c4da7a5/deploy-status)](https://app.netlify.com/projects/algorithmvis/deploys)
+
 An elegant, interactive web application for visualizing classic computer science algorithms. This tool helps users learn and explore sorting, pathfinding, tree traversal, and dynamic programming algorithms through beautifully animated and responsive visualizations.
 
 ---
